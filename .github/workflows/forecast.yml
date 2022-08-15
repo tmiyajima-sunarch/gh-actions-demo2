@@ -19,4 +19,19 @@ jobs:
         node-version: 16.x
         cache: 'npm'
     - run: npm ci
-    - run: node main.js
+    - id: forecast
+      run: |
+        RESULT=$(node main.js)
+        echo "::set-output name=forecast_text::${RESULT}"
+    - name: Send custom JSON data to Slack workflow
+      id: slack
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        # For posting a rich message using Block Kit
+        payload: |
+          {
+            "text": "${{steps.forecast.outputs.forecast_text}}"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
